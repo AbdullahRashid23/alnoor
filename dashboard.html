@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Dashboard</h1>
+  </header>
+  <section>
+    <h2>Overview</h2>
+    <p>Total Customers: <span id="totalCustomers">0</span></p>
+    <p>Total Purchases: <span id="totalPurchases">0</span> PKR</p>
+    <p>Total Sales: <span id="totalSales">0</span> PKR</p>
+    <p>Estimated Profit: <span id="estimatedProfit">0</span> PKR</p>
+  </section>
+  <nav>
+    <button onclick="location.href='manage-customer.html'">Manage Customers & Services</button>
+    <button onclick="location.href='view-customers.html'">View Customers</button>
+    <button onclick="location.href='purchases.html'">Manage Inventory Purchases</button>
+    <button onclick="location.href='monthly-purchases.html'">Monthly Summaries</button>
+    <button onclick="exportData()">Export Data</button>
+    <button onclick="document.getElementById('importInput').click()">Import Data</button>
+    <input type="file" id="importInput" style="display:none" accept=".json" onchange="importData(event)">
+  </nav>
+  <script src="storage.js"></script>
+  <script>
+    function updateOverview() {
+      const customers = getCustomers();
+      const purchases = getPurchases();
+      const totalCustomers = customers.length;
+      const totalPurchases = purchases.reduce((sum, p) => sum + p.cost, 0);
+      const totalSales = customers.reduce((sum, c) => 
+        sum + c.services.reduce((s, svc) => s + svc.totalBill, 0), 0);
+      document.getElementById('totalCustomers').textContent = totalCustomers;
+      document.getElementById('totalPurchases').textContent = totalPurchases.toFixed(2);
+      document.getElementById('totalSales').textContent = totalSales.toFixed(2);
+      document.getElementById('estimatedProfit').textContent = (totalSales - totalPurchases).toFixed(2);
+    }
+    updateOverview();
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Customer & Services</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Manage Customer & Services</h1>
+  </header>
+  <section>
+    <form id="customerForm" onsubmit="handleAdd(event)">
+      <h2>Customer Details</h2>
+      <input id="name" placeholder="Customer Name" required>
+      <input id="phone" placeholder="Phone Number" required>
+      <h2>Service Details</h2>
+      <input id="carNumber" placeholder="Car Number" required>
+      <input id="model" placeholder="Model/Make" required>
+      <input id="mileage" type="number" placeholder="Current Mileage (km)" required>
+      <input id="nextMileage" type="number" placeholder="Next Oil Change Mileage (km)" required>
+      <input id="oil" placeholder="Oil Type" required>
+      <input id="filter" placeholder="Filter Type">
+      <h2>Cost Details</h2>
+      <input id="oilCost" type="number" placeholder="Oil Cost (PKR)" required>
+      <input id="filterCost" type="number" placeholder="Filter Cost (PKR)">
+      <input id="totalBill" type="number" placeholder="Total Bill (PKR, auto-calculated)" readonly>
+      <button type="submit">Add Customer & Service</button>
+    </form>
+  </section>
+  <script src="storage.js"></script>
+  <script>
+    function calculateTotalBill() {
+      const oilCost = parseFloat(document.getElementById('oilCost').value) || 0;
+      const filterCost = parseFloat(document.getElementById('filterCost').value) || 0;
+      const markup = 1.3;
+      const total = (oilCost + filterCost) * markup;
+      document.getElementById('totalBill').value = total.toFixed(2) || '0.00';
+      console.log('Calculated total bill:', total);
+    }
+
+    document.getElementById('oilCost').addEventListener('input', calculateTotalBill);
+    document.getElementById('filterCost').addEventListener('input', calculateTotalBill);
+
+    function handleAdd(e) {
+      e.preventDefault();
+      console.log('Form submitted, collecting data...');
+      const customer = {
+        name: document.getElementById('name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        services: [{
+          carNumber: document.getElementById('carNumber').value.trim(),
+          model: document.getElementById('model').value.trim(),
+          mileage: parseInt(document.getElementById('mileage').value) || 0,
+          nextMileage: parseInt(document.getElementById('nextMileage').value) || 0,
+          oil: document.getElementById('oil').value.trim(),
+          filter: document.getElementById('filter').value.trim() || '',
+          totalBill: parseFloat(document.getElementById('totalBill').value) || 0,
+          date: new Date().toISOString()
+        }]
+      };
+      const purchase = {
+        item: `Oil (${customer.services[0].oil}) + Filter (${customer.services[0].filter || 'None'})`,
+        cost: (parseFloat(document.getElementById('oilCost').value) || 0) + 
+              (parseFloat(document.getElementById('filterCost').value) || 0),
+        date: new Date().toISOString()
+      };
+      console.log('Customer data:', JSON.stringify(customer, null, 2));
+      console.log('Purchase data:', JSON.stringify(purchase, null, 2));
+      try {
+        addCustomerAndService(customer, purchase);
+        console.log('Add successful, resetting form...');
+        document.getElementById('customerForm').reset();
+        calculateTotalBill();
+        alert('Customer and service added successfully! Check View Customers page.');
+      } catch (error) {
+        console.error('Add failed:', error);
+        alert(`Failed to add customer: ${error.message}`);
+      }
+    }
+  </script>
+</body>
+</html>

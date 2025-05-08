@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Customers</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Customer Records</h1>
+  </header>
+  <section>
+    <input id="search" placeholder="Search by Name or Phone" oninput="render()">
+    <ul id="results"></ul>
+  </section>
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close">×</span>
+      <h2>Edit Customer</h2>
+      <form onsubmit="handleEditCustomer(event)">
+        <input id="editName" placeholder="Customer Name" required>
+        <input id="editPhone" placeholder="Phone Number" required>
+        <input id="editIndex" type="hidden">
+        <button type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+  <script src="storage.js"></script>
+  <script>
+    function render() {
+      console.log('Starting render process...');
+      const q = document.getElementById('search').value.toLowerCase();
+      const customers = getCustomers();
+      console.log('Customers retrieved for rendering:', JSON.stringify(customers, null, 2));
+      const matches = customers.filter(c => 
+        (c.name && c.name.toLowerCase().includes(q)) || 
+        (c.phone && c.phone.toLowerCase().includes(q))
+      );
+      console.log('Filtered matches:', JSON.stringify(matches, null, 2));
+      const results = document.getElementById("results");
+      results.innerHTML = '';
+
+      if (matches.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'No customers found.';
+        results.appendChild(li);
+        console.log('No customers matched the search criteria.');
+        return;
+      }
+
+      matches.forEach((c, index) => {
+        if (!c.name || !c.phone) {
+          console.warn(`Skipping invalid customer at index ${index}:`, c);
+          return;
+        }
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <strong>${c.name}</strong> (${c.phone})
+          <button onclick="editCustomer(${index})">Edit</button>
+          <button onclick="deleteCustomer(${index})">Delete</button>
+          <ul>
+            ${c.services && c.services.length > 0 ? c.services.map((svc, svcIndex) => `
+              <li>
+                ${svc.carNumber || 'N/A'} - ${svc.model || 'N/A'}, ${svc.mileage || 0} km, 
+                Next Oil Change: ${svc.nextMileage || 0} km, 
+                Oil: ${svc.oil || 'N/A'}, Filter: ${svc.filter || 'None'}, 
+                Bill: ${svc.totalBill || 0} PKR,
+                Date: ${svc.date ? new Date(svc.date).toLocaleDateString() : 'N/A'}
+                <button onclick="deleteService(${index}, ${svcIndex})">Delete</button>
+              </li>
+            `).join('') : '<li>No services recorded.</li>'}
+          </ul>
+          <button onclick="location.href='manage-customer.html?phone=${encodeURIComponent(c.phone)}'">Add New Service</button>
+        `;
+        results.appendChild(li);
+        console.log(`Rendered customer: ${c.name}`);
+      });
+    }
+
+    function editCustomer(index) {
+      const customers = getCustomers();
+      const customer = customers[index];
+      if (!customer || !customer.name || !customer.phone) {
+        console.error('Invalid customer data for editing:', customer);
+        alert('Cannot edit: Invalid customer data.');
+        return;
+      }
+      document.getElementById('editName').value = customer.name;
+      document.getElementById('editPhone').value = customer.phone;
+      document.getElementById('editIndex').value = index;
+      document.getElementById('editModal').style.display = 'block';
+    }
+
+    function handleEditCustomer(e) {
+      e.preventDefault();
+      const index = parseInt(document.getElementById('editIndex').value);
+      const updates = {
+        name: document.getElementById('editName').value.trim(),
+        phone: document.getElementById('editPhone').value.trim()
+      };
+      if (!updates.name || !updates.phone) {
+        console.error('Invalid edit data:', updates);
+        alert('Please fill all fields.');
+        return;
+      }
+      updateCustomer(index, updates);
+      e.target.reset();
+      document.getElementById('editModal').style.display = 'none';
+      render();
+    }
+
+    document.querySelector('.close').onclick = () => {
+      document.getElementById('editModal').style.display = 'none';
+    };
+
+    window.onload = () => {
+      console.log('Page loaded, triggering render...');
+      render();
+    };
+  </script>
+</body>
+</html>

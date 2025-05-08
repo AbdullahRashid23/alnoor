@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Summaries</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Monthly Summaries</h1>
+  </header>
+  <section>
+    <h2>Purchases by Month</h2>
+    <ul id="monthlyResults"></ul>
+  </section>
+  <script src="storage.js"></script>
+  <script>
+    function renderMonthlyPurchases() {
+      const purchases = getPurchases();
+      const monthlyGroups = {};
+      purchases.forEach(p => {
+        const date = new Date(p.date);
+        const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+        if (!monthlyGroups[key]) {
+          monthlyGroups[key] = [];
+        }
+        monthlyGroups[key].push(p);
+      });
+
+      const results = document.getElementById("monthlyResults");
+      results.innerHTML = '';
+      Object.keys(monthlyGroups).sort().reverse().forEach(key => {
+        const [year, month] = key.split('-');
+        const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
+        const totalCost = monthlyGroups[key].reduce((sum, p) => sum + p.cost, 0);
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <strong>${monthName} ${year}</strong> (Total: ${totalCost.toFixed(2)} PKR)
+          <ul>
+            ${monthlyGroups[key].map(p => `
+              <li>${p.item} - ${p.cost} PKR (Added: ${new Date(p.date).toLocaleDateString()})</li>
+            `).join('')}
+          </ul>
+        `;
+        results.appendChild(li);
+      });
+    }
+
+    renderMonthlyPurchases();
+  </script>
+</body>
+</html>

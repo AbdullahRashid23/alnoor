@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Inventory Purchases</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Manage Inventory Purchases</h1>
+  </header>
+  <section>
+    <form onsubmit="handleAddPurchase(event)">
+      <input id="item" placeholder="Item Name (e.g., Oil Can)" required>
+      <input id="cost" type="number" placeholder="Purchase Cost (PKR)" required>
+      <button type="submit">Add Purchase</button>
+    </form>
+    <h2>Purchase History</h2>
+    <ul id="purchaseResults"></ul>
+  </section>
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Edit Purchase</h2>
+      <form onsubmit="handleEditPurchase(event)">
+        <input id="editItem" placeholder="Item Name" required>
+        <input id="editCost" type="number" placeholder="Purchase Cost (PKR)" required>
+        <input id="editIndex" type="hidden">
+        <button type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+  <script src="storage.js"></script>
+  <script>
+    function renderPurchases() {
+      const purchases = getPurchases();
+      const results = document.getElementById("purchaseResults");
+      results.innerHTML = '';
+      purchases.forEach((p, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          ${p.item} - ${p.cost} PKR (Added: ${new Date(p.date).toLocaleDateString()})
+          <button onclick="editPurchase(${index})">Edit</button>
+          <button onclick="deletePurchase(${index})">Delete</button>
+        `;
+        results.appendChild(li);
+      });
+    }
+
+    function handleAddPurchase(e) {
+      e.preventDefault();
+      addPurchase(document.getElementById('item').value, parseFloat(document.getElementById('cost').value));
+      e.target.reset();
+      renderPurchases();
+    }
+
+    function editPurchase(index) {
+      const purchases = getPurchases();
+      const purchase = purchases[index];
+      document.getElementById('editItem').value = purchase.item;
+      document.getElementById('editCost').value = purchase.cost;
+      document.getElementById('editIndex').value = index;
+      document.getElementById('editModal').style.display = 'block';
+    }
+
+    function handleEditPurchase(e) {
+      e.preventDefault();
+      const index = parseInt(document.getElementById('editIndex').value);
+      updatePurchase(index, {
+        item: document.getElementById('editItem').value.trim(),
+        cost: parseFloat(document.getElementById('editCost').value),
+        date: new Date().toISOString()
+      });
+      e.target.reset();
+      document.getElementById('editModal').style.display = 'none';
+      renderPurchases();
+    }
+
+    document.querySelector('.close').onclick = () => {
+      document.getElementById('editModal').style.display = 'none';
+    };
+
+    renderPurchases();
+  </script>
+</body>
+</html>
